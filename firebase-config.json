@@ -1,0 +1,13 @@
+{
+  "firebaseConfig": {
+    "apiKey": "YOUR_API_KEY",
+    "authDomain": "YOUR_PROJECT.firebaseapp.com",
+    "projectId": "YOUR_PROJECT_ID",
+    "storageBucket": "YOUR_PROJECT.appspot.com",
+    "messagingSenderId": "YOUR_SENDER_ID",
+    "appId": "YOUR_APP_ID"
+  },
+  "instructions": {
+    "setup": "1. Create a Firebase project at https://console.firebase.google.com\n2. Enable Authentication (Email/Password)\n3. Enable Firestore Database\n4. Copy your firebase config and replace the values above\n5. Download google-services.json for Android and place in mobile/android/app/\n6. Download GoogleService-Info.plist for iOS and place in mobile/ios/Runner/"
+  }
+}
