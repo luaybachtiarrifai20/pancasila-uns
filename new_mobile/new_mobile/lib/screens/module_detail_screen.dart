@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'post_module_quiz_screen.dart';
+import 'dosen_kelola_kuis_screen.dart';
 
 class ModuleDetailScreen extends StatefulWidget {
   final String moduleId;
@@ -434,20 +435,29 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen> {
                       height: 56,
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => PostModuleQuizScreen(
-                                moduleTitle: _currentTitle,
-                                themeColor: widget.color,
+                          if (_isDosen) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const DosenKelolaKuisScreen(),
                               ),
-                            ),
-                          );
+                            );
+                          } else {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => PostModuleQuizScreen(
+                                  moduleTitle: _currentTitle,
+                                  themeColor: widget.color,
+                                ),
+                              ),
+                            );
+                          }
                         },
                         icon: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 20),
-                        label: const Text(
-                          'Mulai Ujian Pemahaman',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                        label: Text(
+                          _isDosen ? 'Lihat Kuis' : 'Mulai Ujian Pemahaman',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFB91C1C), // red-700

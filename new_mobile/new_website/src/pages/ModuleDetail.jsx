@@ -92,7 +92,11 @@ export default function ModuleDetail() {
   };
 
   const handleStartQuiz = () => {
-    navigate('/quiz');
+    if (isDosen) {
+      navigate('/dosen-kelola-kuis');
+    } else {
+      navigate('/quiz');
+    }
   };
 
   if (loading) {
@@ -269,7 +273,7 @@ export default function ModuleDetail() {
                   onClick={handleStartQuiz}
                   className="w-full sm:w-auto bg-red-700 text-white px-8 py-4 rounded-2xl font-bold shadow-xl shadow-red-100 hover:bg-red-800 transition-all flex items-center justify-center gap-2"
                 >
-                  Lanjut ke Kuis
+                  {isDosen ? 'Lihat Kuis' : 'Lanjut ke Kuis'}
                   <ChevronRight className="w-5 h-5" />
                 </button>
               </div>
