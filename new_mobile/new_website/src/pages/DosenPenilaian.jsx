@@ -126,10 +126,13 @@ export default function DosenPenilaian() {
                 
                 <div className="flex flex-col gap-2">
                   {sub.status === 'Belum Dinilai' ? (
-                    <button className="bg-orange-600 text-white px-6 py-2.5 rounded-xl text-xs font-black shadow-lg shadow-orange-100 hover:bg-orange-700 transition-all flex items-center gap-2">
-                      Beri Nilai
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
+                          <button
+                            onClick={() => navigate(`/dosen-penilaian-detail/${sub.id}`)}
+                            className="bg-orange-600 text-white px-6 py-2.5 rounded-xl text-xs font-black shadow-lg shadow-orange-100 hover:bg-orange-700 transition-all flex items-center gap-2"
+                          >
+                            Beri Nilai
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
                   ) : (
                     <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-xs bg-emerald-50 px-3 py-2 rounded-xl">
                       <CheckCircle2 className="w-4 h-4" />

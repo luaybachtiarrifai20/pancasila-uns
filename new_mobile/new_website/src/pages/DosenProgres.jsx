@@ -16,31 +16,41 @@ export default function DosenProgres() {
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const classSnap = await getDocs(collection(db, 'classes'));
+        setClasses(classSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+
+        // Get all mahasiswa users
+        const usersSnap = await getDocs(collection(db, 'users'));
+        const mahasiswa = usersSnap.docs
+          .filter(doc => doc.data().role === 'mahasiswa')
+          .map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // Get all submissions
+        const subsSnap = await getDocs(collection(db, 'submissions'));
+        const submissions = subsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // Compute progress per student
+        const studentProgress = mahasiswa.map(student => {
+          const studentSubs = submissions.filter(s => s.userId === student.id);
+          const total = studentSubs.length;
+          const completed = studentSubs.filter(s => s.status === 'Selesai').length;
+          const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+          const lastActiveDoc = studentSubs.sort((a, b) => b.timestamp?.seconds - a.timestamp?.seconds)[0];
+          const lastActive = lastActiveDoc ? new Date(lastActiveDoc.timestamp?.seconds * 1000).toLocaleString() : '-';
+          return { ...student, progress, lastActive };
+        });
+        setStudents(studentProgress);
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchData();
   }, []);
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const classSnap = await getDocs(collection(db, 'classes'));
-      setClasses(classSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-
-      const studentSnap = await getDocs(collection(db, 'users'));
-      const studentData = studentSnap.docs
-        .map(doc => ({ 
-          id: doc.id, 
-          ...doc.data(),
-          progress: Math.floor(Math.random() * 100), // Random for demo, should be dynamic
-          lastActive: '2 jam yang lalu'
-        }))
-        .filter(u => u.role === 'mahasiswa');
-      setStudents(studentData);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const filteredStudents = students.filter(s => 
     (selectedClass === 'all' ? true : s.classId === selectedClass) &&
