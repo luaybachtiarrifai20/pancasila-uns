@@ -33,9 +33,61 @@ export default function CaseStudy() {
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Lecturer grading states
+  const [caseSubmissions, setCaseSubmissions] = useState([]);
+  const [isDosen, setIsDosen] = useState(false);
+  const [isGradeModalOpen, setIsGradeModalOpen] = useState(false);
+  const [selectedSubmission, setSelectedSubmission] = useState(null);
+  const [gradeScore, setGradeScore] = useState('');
+
   useEffect(() => {
     fetchCases();
   }, []);
+
+  useEffect(() => {
+    const user = auth.currentUser;
+    if (user && user.email && user.email.includes('dosen')) {
+      setIsDosen(true);
+    }
+  }, []);
+
+  // Real-time listener for submissions related to the selected case study
+  useEffect(() => {
+    if (!selectedCase || !isDosen) return;
+
+    const unsubscribe = onSnapshot(collection(db, 'submissions'), (snapshot) => {
+      const allSubs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const filtered = allSubs.filter(sub => sub.title === `Studi Kasus: ${selectedCase.title}`);
+      setCaseSubmissions(filtered);
+    });
+
+    return unsubscribe;
+  }, [selectedCase, isDosen]);
+
+  const handleOpenGradeModal = (sub) => {
+    setSelectedSubmission(sub);
+    setGradeScore(sub.score !== undefined ? sub.score.toString() : '');
+    setIsGradeModalOpen(true);
+  };
+
+  const handleSaveGrade = async (e) => {
+    e.preventDefault();
+    if (!selectedSubmission) return;
+
+    try {
+      const subRef = doc(db, 'submissions', selectedSubmission.id);
+      await updateDoc(subRef, {
+        score: Number(gradeScore),
+        status: 'Selesai'
+      });
+      setIsGradeModalOpen(false);
+      setSelectedSubmission(null);
+      setGradeScore('');
+    } catch (error) {
+      console.error("Error updating grade:", error);
+      alert("Gagal menyimpan nilai: " + error.message);
+    }
+  };
 
   const fetchCases = async () => {
     setLoading(true);
@@ -102,6 +154,7 @@ export default function CaseStudy() {
         userName: userName,
         title: `Studi Kasus: ${selectedCase.title}`,
         type: 'tugas',
+        answerText: comment,
         score: 0,
         status: 'Belum Dinilai',
         timestamp: new Date().toISOString()
@@ -223,20 +276,73 @@ export default function CaseStudy() {
                   </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="relative">
-                  <textarea 
-                    placeholder="Tuliskan analisis atau pendapatmu..."
-                    className="w-full bg-slate-50 border border-slate-100 rounded-[2rem] p-6 pr-20 text-slate-700 min-h-[150px] outline-none focus:ring-2 focus:ring-teal-500 transition-all resize-none text-sm"
-                    value={comment}
-                    onChange={(e) => setComment(e.target.value)}
-                  />
-                  <button 
-                    type="submit"
-                    className="absolute right-4 bottom-4 bg-teal-600 text-white p-4 rounded-2xl shadow-lg shadow-teal-100 hover:bg-teal-700 transition-all transform active:scale-95"
-                  >
-                    <Send className="w-5 h-5" />
-                  </button>
-                </form>
+                {isDosen ? (
+                  <div className="border-t border-slate-100 pt-8 mt-8">
+                    <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
+                      <ShieldCheck className="w-5 h-5 text-teal-600" />
+                      Jawaban & Nilai Mahasiswa ({caseSubmissions.length})
+                    </h3>
+                    
+                    <div className="space-y-4">
+                      {caseSubmissions.map((sub) => (
+                        <div key={sub.id} className="bg-slate-50 rounded-2xl p-6 border border-slate-100 flex flex-col gap-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-teal-100 text-teal-700 rounded-xl flex items-center justify-center font-bold">
+                                {sub.userName ? sub.userName.charAt(0).toUpperCase() : 'M'}
+                              </div>
+                              <div>
+                                <p className="font-bold text-slate-800 text-sm">{sub.userName}</p>
+                                <p className="text-[10px] text-slate-400 font-medium">{sub.userId}</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1">Nilai</p>
+                              <p className={`text-xl font-black ${sub.status === 'Selesai' ? 'text-emerald-600' : 'text-slate-300'}`}>
+                                {sub.score !== undefined ? sub.score : '-'}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="bg-white rounded-xl p-4 border border-slate-100">
+                            <p className="text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Jawaban Mahasiswa:</p>
+                            <p className="text-slate-600 text-sm leading-relaxed whitespace-pre-line">
+                              {sub.answerText || 'Tidak ada teks jawaban.'}
+                            </p>
+                          </div>
+
+                          <div className="flex justify-end">
+                            <button
+                              onClick={() => handleOpenGradeModal(sub)}
+                              className="bg-teal-600 text-white px-5 py-2 rounded-xl text-xs font-bold shadow-md shadow-teal-100 hover:bg-teal-700 transition-all"
+                            >
+                              {sub.status === 'Selesai' ? 'Ubah Nilai' : 'Beri Nilai'}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+
+                      {caseSubmissions.length === 0 && (
+                        <p className="text-slate-400 italic text-sm text-center py-4">Belum ada mahasiswa yang mengirimkan jawaban.</p>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit} className="relative">
+                    <textarea 
+                      placeholder="Tuliskan analisis atau pendapatmu..."
+                      className="w-full bg-slate-50 border border-slate-100 rounded-[2rem] p-6 pr-20 text-slate-700 min-h-[150px] outline-none focus:ring-2 focus:ring-teal-500 transition-all resize-none text-sm"
+                      value={comment}
+                      onChange={(e) => setComment(e.target.value)}
+                    />
+                    <button 
+                      type="submit"
+                      className="absolute right-4 bottom-4 bg-teal-600 text-white p-4 rounded-2xl shadow-lg shadow-teal-100 hover:bg-teal-700 transition-all transform active:scale-95"
+                    >
+                      <Send className="w-5 h-5" />
+                    </button>
+                  </form>
+                )}
               </div>
 
               {/* Comment Feed */}
@@ -309,6 +415,57 @@ export default function CaseStudy() {
           </div>
         </div>
       </main>
+      {/* Grade Modal */}
+      {isGradeModalOpen && selectedSubmission && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2rem] w-full max-w-md shadow-2xl border border-slate-100 overflow-hidden transform transition-all duration-300">
+            <div className="px-6 py-4 bg-slate-50 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="font-bold text-slate-800 text-base">Penilaian Studi Kasus</h3>
+              <button 
+                onClick={() => { setIsGradeModalOpen(false); setSelectedSubmission(null); }}
+                className="text-slate-400 hover:text-slate-600 text-sm font-bold"
+              >
+                Tutup
+              </button>
+            </div>
+            <form onSubmit={handleSaveGrade} className="p-6 space-y-6">
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Mahasiswa</p>
+                <p className="font-bold text-slate-800 text-sm">{selectedSubmission.userName}</p>
+                <p className="text-xs text-slate-500">{selectedSubmission.userId}</p>
+              </div>
+
+              <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 max-h-48 overflow-y-auto">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Jawaban</p>
+                <p className="text-slate-600 text-xs leading-relaxed whitespace-pre-line">
+                  {selectedSubmission.answerText || 'Tidak ada teks jawaban.'}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Input Nilai (0-100)</label>
+                <input 
+                  type="number" 
+                  min="0"
+                  max="100"
+                  required
+                  placeholder="Contoh: 85"
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-teal-500 outline-none font-bold"
+                  value={gradeScore}
+                  onChange={(e) => setGradeScore(e.target.value)}
+                />
+              </div>
+
+              <button 
+                type="submit"
+                className="w-full py-3.5 bg-teal-600 text-white rounded-xl text-sm font-bold shadow-lg shadow-teal-100 hover:bg-teal-700 active:scale-95 transition-all"
+              >
+                Simpan Nilai
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

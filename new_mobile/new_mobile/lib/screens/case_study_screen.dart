@@ -51,6 +51,7 @@ class _CaseStudyScreenState extends State<CaseStudyScreen> {
         'userName': userName,
         'title': 'Studi Kasus: ${_selectedCaseData?['title'] ?? 'Diskusi'}',
         'type': 'tugas',
+        'answerText': text,
         'score': 0,
         'status': 'Belum Dinilai',
         'timestamp': DateTime.now().toIso8601String(),
@@ -283,7 +284,8 @@ class _CaseStudyScreenState extends State<CaseStudyScreen> {
                         ),
                         if (_selectedCaseData?['imageUrl'] != null && _selectedCaseData!['imageUrl'].toString().isNotEmpty) ...[
                           const SizedBox(height: 20),
-                          ClipRatios(
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
                             child: Image.network(
                               _selectedCaseData!['imageUrl'],
                               width: double.infinity,

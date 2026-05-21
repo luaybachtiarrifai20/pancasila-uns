@@ -1,3 +1,5 @@
+
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import PrivateRoute from './components/PrivateRoute';
@@ -10,6 +12,7 @@ import DosenPenilaian from './pages/DosenPenilaian';
 import DosenKelolaModul from './pages/DosenKelolaModul';
 import DosenKelolaKuis from './pages/DosenKelolaKuis';
 import DosenKelolaKasus from './pages/DosenKelolaKasus';
+import DosenKelolaKasusDetail from './pages/DosenKelolaKasusDetail';
 import ModuleDetail from './pages/ModuleDetail';
 import Quiz from './pages/Quiz';
 import CaseStudy from './pages/CaseStudy';
@@ -37,7 +40,7 @@ function App() {
         <Route path="/dosen-kelola-modul" element={<PrivateRoute><DosenKelolaModul /></PrivateRoute>} />
         <Route path="/dosen-kelola-kuis" element={<PrivateRoute><DosenKelolaKuis /></PrivateRoute>} />
         <Route path="/dosen-kelola-kasus" element={<PrivateRoute><DosenKelolaKasus /></PrivateRoute>} />
-
+<Route path="/dosen-kelola-kasus/:caseId" element={<PrivateRoute><DosenKelolaKasusDetail /></PrivateRoute>} />
         {/* Admin Routes */}
         <Route path="/admin-dashboard" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
       </Routes>

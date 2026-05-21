@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dosen_kelola_kasus_detail_screen.dart';
 
 class DosenKelolaKasusScreen extends StatefulWidget {
   const DosenKelolaKasusScreen({super.key});
@@ -302,89 +303,96 @@ class _DosenKelolaKasusScreenState extends State<DosenKelolaKasusScreen> {
 
           final docs = snapshot.data!.docs;
 
+          // Build list of case cards
           return ListView.builder(
-            padding: const EdgeInsets.all(20.0),
             itemCount: docs.length,
             itemBuilder: (context, index) {
-              final doc = docs[index];
-              final data = doc.data() as Map<String, dynamic>;
-              final caseId = doc.id;
-
-              return Container(
-                margin: const EdgeInsets.only(bottom: 14),
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(color: const Color(0xFFF1F5F9)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFF0F172A).withOpacity(0.02),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    )
-                  ],
+              final cDoc = docs[index];
+              final data = cDoc.data() as Map<String, dynamic>;
+              final caseId = cDoc.id;
+              return InkWell(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => DosenKelolaKasusDetailScreen(caseId: caseId),
+                  ),
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF0FDFA),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              data['category'] ?? 'Kasus',
-                              style: const TextStyle(
-                                color: Color(0xFF0D9488),
-                                fontSize: 9,
-                                fontWeight: FontWeight.bold,
+                child: Container(
+                  margin: const EdgeInsets.only(bottom: 14),
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: const Color(0xFFF1F5F9)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF0F172A).withOpacity(0.02),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF0FDFA),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                data['category'] ?? 'Kasus',
+                                style: const TextStyle(
+                                  color: Color(0xFF0D9488),
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            data['title'] ?? 'Tanpa Judul',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 15,
-                              color: Color(0xFF1E293B),
+                            const SizedBox(height: 8),
+                            Text(
+                              data['title'] ?? 'Tanpa Judul',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 15,
+                                color: Color(0xFF1E293B),
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            data['content'] ?? '',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Color(0xFF64748B),
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                              height: 1.4,
+                            const SizedBox(height: 6),
+                            Text(
+                              data['content'] ?? '',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Color(0xFF64748B),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                height: 1.4,
+                              ),
                             ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit_rounded, color: Color(0xFF0D9488)),
+                            onPressed: () => _tampilkanDialogEditor(caseId: caseId, currentData: data),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFEF4444)),
+                            onPressed: () => _handleDelete(caseId),
                           ),
                         ],
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.edit_rounded, color: Color(0xFF0D9488)),
-                          onPressed: () => _tampilkanDialogEditor(caseId: caseId, currentData: data),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.delete_outline_rounded, color: Color(0xFFEF4444)),
-                          onPressed: () => _handleDelete(caseId),
-                        ),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               );
             },
