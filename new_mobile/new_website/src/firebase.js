@@ -2,15 +2,14 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// TODO: Ganti dengan konfigurasi Firebase Web App Anda
-// Anda bisa mendapatkannya di Firebase Console > Project Settings > General > Your Apps (Web)
+// Vite injects environment variables prefixed with VITE_
 const firebaseConfig = {
-  apiKey: "AIzaSyA2qfKiuewAmq9AOCNLaSj9BTxIMuyE0uE", // Biasanya sama dengan yang di google-services.json
-  authDomain: "pancasila-uns.firebaseapp.com",
-  projectId: "pancasila-uns",
-  storageBucket: "pancasila-uns.firebasestorage.app",
-  messagingSenderId: "543989558747",
-  appId: "1:543989558747:web:d7eafc994530b6e5b94bfe" // Perlu didapatkan dari Firebase Console, berbeda dengan mobile
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 // Initialize Firebase

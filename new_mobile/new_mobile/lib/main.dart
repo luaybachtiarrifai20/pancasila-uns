@@ -1,6 +1,7 @@
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
@@ -10,40 +11,41 @@ import 'screens/admin_dashboard_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  await dotenv.load(fileName: ".env");
   FirebaseOptions options;
   if (kIsWeb) {
-    options = const FirebaseOptions(
-      apiKey: "AIzaSyA2qfKiuewAmq9AOCNLaSj9BTxIMuyE0uE",
-      authDomain: "pancasila-uns.firebaseapp.com",
-      projectId: "pancasila-uns",
-      storageBucket: "pancasila-uns.firebasestorage.app",
-      messagingSenderId: "543989558747",
-      appId: "1:543989558747:web:d7eafc994530b6e5b94bfe",
+    options = FirebaseOptions(
+      apiKey: dotenv.get('FIREBASE_API_KEY'),
+      authDomain: dotenv.get('FIREBASE_AUTH_DOMAIN'),
+      projectId: dotenv.get('FIREBASE_PROJECT_ID'),
+      storageBucket: dotenv.get('FIREBASE_STORAGE_BUCKET'),
+      messagingSenderId: dotenv.get('FIREBASE_MESSAGING_SENDER_ID'),
+      appId: dotenv.get('FIREBASE_APP_ID'),
     );
   } else if (Platform.isAndroid) {
-    options = const FirebaseOptions(
-      apiKey: "AIzaSyA-hH0dBg1ka8J1EhUlyuNl1ha30z1GwtU",
-      projectId: "pancasila-uns",
-      storageBucket: "pancasila-uns.firebasestorage.app",
-      messagingSenderId: "543989558747",
-      appId: "1:543989558747:android:f6f4ff926ea2debbb94bfe",
+    options = FirebaseOptions(
+      apiKey: dotenv.get('FIREBASE_API_KEY'),
+      projectId: dotenv.get('FIREBASE_PROJECT_ID'),
+      storageBucket: dotenv.get('FIREBASE_STORAGE_BUCKET'),
+      messagingSenderId: dotenv.get('FIREBASE_MESSAGING_SENDER_ID'),
+      appId: dotenv.get('FIREBASE_APP_ID'),
     );
   } else if (Platform.isIOS) {
-    options = const FirebaseOptions(
-      apiKey: "AIzaSyA-hH0dBg1ka8J1EhUlyuNl1ha30z1GwtU",
-      projectId: "pancasila-uns",
-      storageBucket: "pancasila-uns.firebasestorage.app",
-      messagingSenderId: "543989558747",
-      appId: "1:543989558747:ios:c503028d7eafc994530b6e", // generic iOS appId
-      iosBundleId: "com.uns.pancasila",
+    options = FirebaseOptions(
+      apiKey: dotenv.get('FIREBASE_API_KEY'),
+      projectId: dotenv.get('FIREBASE_PROJECT_ID'),
+      storageBucket: dotenv.get('FIREBASE_STORAGE_BUCKET'),
+      messagingSenderId: dotenv.get('FIREBASE_MESSAGING_SENDER_ID'),
+      appId: dotenv.get('FIREBASE_APP_ID'),
+      iosBundleId: dotenv.get('FIREBASE_IOS_BUNDLE_ID'),
     );
   } else {
-    options = const FirebaseOptions(
-      apiKey: "AIzaSyA-hH0dBg1ka8J1EhUlyuNl1ha30z1GwtU",
-      projectId: "pancasila-uns",
-      storageBucket: "pancasila-uns.firebasestorage.app",
-      messagingSenderId: "543989558747",
-      appId: "1:543989558747:ios:c503028d7eafc994530b6e",
+    options = FirebaseOptions(
+      apiKey: dotenv.get('FIREBASE_API_KEY'),
+      projectId: dotenv.get('FIREBASE_PROJECT_ID'),
+      storageBucket: dotenv.get('FIREBASE_STORAGE_BUCKET'),
+      messagingSenderId: dotenv.get('FIREBASE_MESSAGING_SENDER_ID'),
+      appId: dotenv.get('FIREBASE_APP_ID'),
     );
   }
 

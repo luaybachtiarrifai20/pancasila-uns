@@ -3,26 +3,43 @@ const cors = require('cors');
 const admin = require('firebase-admin');
 const fs = require('fs');
 const path = require('path');
-
-// Graceful check for Service Account Key
-const keyPath = path.join(__dirname, 'serviceAccountKey.json');
-if (!fs.existsSync(keyPath)) {
-  console.error('\n❌ ERROR: File "serviceAccountKey.json" TIDAK ditemukan di folder backend!');
-  console.error('========================================================================');
-  console.error('👉 CARA MENDAPATKANNYA:');
-  console.error('1. Buka Firebase Console (https://console.firebase.google.com).');
-  console.error('2. Masuk ke Project Settings (klik ikon Gerigi di sebelah kiri atas).');
-  console.error('3. Pilih tab "Service Accounts".');
-  console.error('4. Klik tombol biru "Generate New Private Key" di bagian bawah.');
-  console.error('5. File .json akan terunduh otomatis ke komputer Anda.');
-  console.error('6. Ganti nama (rename) file tersebut menjadi: serviceAccountKey.json');
-  console.error('7. Pindahkan/copy file tersebut ke dalam folder backend ini:');
-  console.error(`   ${__dirname}`);
-  console.error('========================================================================\n');
-  process.exit(1);
+require('dotenv').config();
+// Load service account from environment variable if provided, otherwise fallback to file
+let serviceAccount;
+if (process.env.SERVICE_ACCOUNT_KEY) {
+    try {
+      // Try parsing as raw JSON first
+      serviceAccount = JSON.parse(process.env.SERVICE_ACCOUNT_KEY);
+    } catch (eRaw) {
+      try {
+        // If raw parse fails, assume base64-encoded JSON
+        const decoded = Buffer.from(process.env.SERVICE_ACCOUNT_KEY, 'base64').toString('utf8');
+        serviceAccount = JSON.parse(decoded);
+      } catch (eBase64) {
+        console.error('❌ Failed to parse SERVICE_ACCOUNT_KEY env var as JSON or base64:', eBase64);
+        process.exit(1);
+      }
+    }
+} else {
+  // Graceful check for Service Account Key file
+  const keyPath = path.join(__dirname, 'serviceAccountKey.json');
+  if (!fs.existsSync(keyPath)) {
+    console.error('\n❌ ERROR: File "serviceAccountKey.json" TIDAK ditemukan di folder backend!');
+    console.error('========================================================================');
+    console.error('👉 CARA MENDAPATKANNYA:');
+    console.error('1. Buka Firebase Console (https://console.firebase.google.com).');
+    console.error('2. Masuk ke Project Settings (klik ikon Gerigi di sebelah kiri atas).');
+    console.error('3. Pilih tab "Service Accounts".');
+    console.error('4. Klik tombol biru "Generate New Private Key" di bagian bawah.');
+    console.error('5. File .json akan terunduh otomatis ke komputer Anda.');
+    console.error('6. Ganti nama (rename) file tersebut menjadi: serviceAccountKey.json');
+    console.error('7. Pindahkan/copy file tersebut ke dalam folder backend ini:');
+    console.error(`   ${__dirname}`);
+    console.error('========================================================================\n');
+    process.exit(1);
+  }
+  serviceAccount = require(keyPath);
 }
-
-const serviceAccount = require(keyPath);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
