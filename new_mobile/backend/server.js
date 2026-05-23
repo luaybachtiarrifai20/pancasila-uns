@@ -1,45 +1,30 @@
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const admin = require('firebase-admin');
-const fs = require('fs');
-const path = require('path');
-require('dotenv').config();
-// Load service account from environment variable if provided, otherwise fallback to file
-let serviceAccount;
-if (process.env.SERVICE_ACCOUNT_KEY) {
-    try {
-      // Try parsing as raw JSON first
-      serviceAccount = JSON.parse(process.env.SERVICE_ACCOUNT_KEY);
-    } catch (eRaw) {
-      try {
-        // If raw parse fails, assume base64-encoded JSON
-        const decoded = Buffer.from(process.env.SERVICE_ACCOUNT_KEY, 'base64').toString('utf8');
-        serviceAccount = JSON.parse(decoded);
-      } catch (eBase64) {
-        console.error('❌ Failed to parse SERVICE_ACCOUNT_KEY env var as JSON or base64:', eBase64);
-        process.exit(1);
-      }
-    }
-} else {
-  // Graceful check for Service Account Key file
-  const keyPath = path.join(__dirname, 'serviceAccountKey.json');
-  if (!fs.existsSync(keyPath)) {
-    console.error('\n❌ ERROR: File "serviceAccountKey.json" TIDAK ditemukan di folder backend!');
-    console.error('========================================================================');
-    console.error('👉 CARA MENDAPATKANNYA:');
-    console.error('1. Buka Firebase Console (https://console.firebase.google.com).');
-    console.error('2. Masuk ke Project Settings (klik ikon Gerigi di sebelah kiri atas).');
-    console.error('3. Pilih tab "Service Accounts".');
-    console.error('4. Klik tombol biru "Generate New Private Key" di bagian bawah.');
-    console.error('5. File .json akan terunduh otomatis ke komputer Anda.');
-    console.error('6. Ganti nama (rename) file tersebut menjadi: serviceAccountKey.json');
-    console.error('7. Pindahkan/copy file tersebut ke dalam folder backend ini:');
-    console.error(`   ${__dirname}`);
-    console.error('========================================================================\n');
-    process.exit(1);
-  }
-  serviceAccount = require(keyPath);
-}
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+// ======================
+// Firebase Admin Config
+// ======================
+
+const serviceAccount = {
+  type: "service_account",
+  project_id: process.env.FIREBASE_PROJECT_ID,
+  private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+  private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+  client_email: process.env.FIREBASE_CLIENT_EMAIL,
+  client_id: process.env.FIREBASE_CLIENT_ID,
+  auth_uri: "https://accounts.google.com/o/oauth2/auth",
+  token_uri: "https://oauth2.googleapis.com/token",
+  auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
+  universe_domain: "googleapis.com"
+};
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
@@ -48,16 +33,25 @@ admin.initializeApp({
 const db = admin.firestore();
 const auth = admin.auth();
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+// ======================
+// Routes
+// ======================
 
-// Endpoint to create user in both Auth and Firestore
+app.get('/', (req, res) => {
+  res.send('🚀 Firebase Backend Running');
+});
+
+// ======================
+// Create User
+// ======================
+
 app.post('/create-user', async (req, res) => {
   const { name, nim, classId } = req.body;
 
   if (!name || !nim || !classId) {
-    return res.status(400).send({ message: "Name, NIM, and classId are required" });
+    return res.status(400).send({
+      message: 'Name, NIM, dan classId wajib diisi'
+    });
   }
 
   const formattedNIM = nim.toUpperCase().trim();
@@ -65,63 +59,93 @@ app.post('/create-user', async (req, res) => {
   const password = 'pancasila123';
 
   try {
-    // 1. Check if NIM already exists in Firestore
-    const userDoc = await db.collection('users').where('nim', '==', formattedNIM).get();
-    if (!userDoc.empty) {
-      return res.status(400).send({ message: `NIM ${formattedNIM} sudah terdaftar!` });
+    // Check duplicate NIM
+    const existingUser = await db
+      .collection('users')
+      .where('nim', '==', formattedNIM)
+      .get();
+
+    if (!existingUser.empty) {
+      return res.status(400).send({
+        message: `NIM ${formattedNIM} sudah terdaftar`
+      });
     }
 
-    // 2. Create in Firebase Authentication
-    await auth.createUser({
-      email: email,
-      password: password,
+    // Create Firebase Auth user
+    const userRecord = await auth.createUser({
+      email,
+      password,
       displayName: name
     });
 
-    // 3. Add profile to Firestore
-    const studentData = {
-      id: email,
-      name: name,
+    // Save Firestore
+    const userData = {
+      uid: userRecord.uid,
+      email,
+      name,
       nim: formattedNIM,
+      classId,
       role: 'mahasiswa',
-      classId: classId
+      createdAt: admin.firestore.FieldValue.serverTimestamp()
     };
-    await db.collection('users').doc(email).set(studentData);
 
-    res.status(201).send({ message: "Successfully created user", user: studentData });
+    await db.collection('users').doc(email).set(userData);
+
+    res.status(201).send({
+      message: '✅ User berhasil dibuat',
+      user: userData
+    });
+
   } catch (error) {
-    console.error("Error creating user:", error);
-    res.status(500).send({ message: "Error creating user", error: error.message });
+    console.error(error);
+
+    res.status(500).send({
+      message: '❌ Error creating user',
+      error: error.message
+    });
   }
 });
 
-// Endpoint to delete user from both Auth and Firestore
+// ======================
+// Delete User
+// ======================
+
 app.delete('/delete-user', async (req, res) => {
   const { email } = req.body;
 
   if (!email) {
-    return res.status(400).send({ message: "Email is required" });
+    return res.status(400).send({
+      message: 'Email wajib diisi'
+    });
   }
 
   try {
-    // 1. Get User by Email to find their UID
     const userRecord = await auth.getUserByEmail(email);
-    const uid = userRecord.uid;
 
-    // 2. Delete from Firebase Authentication
-    await auth.deleteUser(uid);
+    await auth.deleteUser(userRecord.uid);
 
-    // 3. Delete from Firestore
     await db.collection('users').doc(email).delete();
 
-    res.status(200).send({ message: `Successfully deleted user ${email} from Auth and Firestore` });
+    res.status(200).send({
+      message: `✅ User ${email} berhasil dihapus`
+    });
+
   } catch (error) {
-    console.error("Error deleting user:", error);
-    res.status(500).send({ message: "Error deleting user", error: error.message });
+    console.error(error);
+
+    res.status(500).send({
+      message: '❌ Error deleting user',
+      error: error.message
+    });
   }
 });
 
+// ======================
+// Start Server
+// ======================
+
 const PORT = process.env.PORT || 5001;
+
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });

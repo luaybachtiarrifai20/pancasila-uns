@@ -82,7 +82,7 @@ export default function DosenKelolaKelas() {
         alert('Data mahasiswa berhasil diperbarui.');
       } else {
         // CREATE NEW via Backend API
-        const response = await fetch('http://localhost:5001/create-user', {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/create-user`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -113,7 +113,7 @@ export default function DosenKelolaKelas() {
     if (window.confirm(`Hapus mahasiswa "${name}" secara TOTAL? Tindakan ini akan menghapus akun login dan profil database.`)) {
       try {
         // CALL THE NODE.JS BACKEND
-        const response = await fetch('http://localhost:5001/delete-user', {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/delete-user`, {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: id })

@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class DosenDetailKelasScreen extends StatefulWidget {
   final String classId;
@@ -24,11 +25,7 @@ class _DosenDetailKelasScreenState extends State<DosenDetailKelasScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   String getBackendUrl() {
-    if (kIsWeb) return 'http://localhost:5001';
-    try {
-      if (Platform.isAndroid) return 'http://10.0.2.2:5001';
-    } catch (_) {}
-    return 'http://localhost:5001';
+    return dotenv.get('BACKEND_URL');
   }
 
   Future<void> _hapusMahasiswa(String email, String name) async {
